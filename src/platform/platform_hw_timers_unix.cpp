@@ -1,6 +1,6 @@
 #include "platform.h"
 
-#if defined(GAME_PLATFORM_ANDROID) || defined(GAME_PLATFORM_LINUX) || defined(GAME_PLATFORM_MACOSX) || defined(GAME_PLATFORM_WEB)
+#if defined(GAME_PLATFORM_ANDROID) || defined(GAME_PLATFORM_LINUX) || defined(GAME_PLATFORM_MACOSX) || defined(GAME_PLATFORM_WEB) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
 
 #include <ctime>
 

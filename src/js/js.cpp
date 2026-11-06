@@ -45,7 +45,7 @@
 #if defined(GAME_PLATFORM_LINUX)
 #include <linux/limits.h>
 #include <malloc.h>
-#elif defined(GAME_PLATFORM_MACOSX)
+#elif defined(GAME_PLATFORM_MACOSX) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
 #include <sys/syslimits.h>
 #include <malloc/malloc.h>
 #elif defined(GAME_PLATFORM_ANDROID)
@@ -86,7 +86,7 @@ namespace
         }
 #if defined(GAME_PLATFORM_WIN)
         return _msize(ptr);
-#elif defined(GAME_PLATFORM_MACOSX)
+#elif defined(GAME_PLATFORM_MACOSX) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
         return malloc_size(ptr);
 #elif defined(GAME_PLATFORM_LINUX) || defined(GAME_PLATFORM_ANDROID)
         return malloc_usable_size(ptr);
@@ -1097,7 +1097,7 @@ vfs::path js_vm_get_absolute_path(vfs::path path) {
 
 #if defined(GAME_PLATFORM_WIN)
             pstr p = _fullpath(buffer, conpath, buffer.capacity);
-#elif defined(GAME_PLATFORM_LINUX) || defined(GAME_PLATFORM_MACOSX)
+#elif defined(GAME_PLATFORM_LINUX) || defined(GAME_PLATFORM_MACOSX) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
             char resolved[PATH_MAX];
             if (!realpath(conpath, resolved)) {
                 continue;
