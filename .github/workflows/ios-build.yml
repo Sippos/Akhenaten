@@ -1,0 +1,44 @@
+name: PharaohPad iOS Build
+
+on:
+  push:
+    branches: [master, main, 'feature/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    name: Build iOS IPA & Run Regression Tests
+    runs-on: macos-14
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run Touch & Gesture Regression Tests
+        run: ./scripts/test-touch.sh
+
+      - name: Build Device Application Bundle
+        run: |
+          export SDK=iphoneos
+          export CONFIGURATION=Release
+          ./scripts/build-ios.sh
+
+      - name: Package Unsigned IPA & Verify License Safety
+        run: |
+          export BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+          ./scripts/package-ipa.sh
+
+      - name: Upload IPA Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PharaohPad-iOS-IPA
+          path: |
+            build/release/*.ipa
+            build/release/*.sha256
+          if-no-files-found: error

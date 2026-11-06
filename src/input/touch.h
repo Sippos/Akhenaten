@@ -7,8 +7,8 @@
 
 enum {
     TOUCH_MODE_ORIGINAL = 0, // original akhenaten touch mode
-    TOUCH_MODE_TOUCHPAD = 1, // drag the pointer and tap-click like on a touchpad (default)
-    TOUCH_MODE_DIRECT = 2,   // pointer jumps to finger but doesn't click on tap
+    TOUCH_MODE_TOUCHPAD = 1, // drag the pointer and tap-click like on a touchpad
+    TOUCH_MODE_DIRECT = 2,   // direct tap-to-click, long-press right-click, two-finger tap/pan
     TOUCH_MODE_MAX = 3
 };
 
@@ -17,6 +17,7 @@ struct touch_t {
     int has_started;
     int has_moved;
     int has_ended;
+    int long_press_handled;  // set when held long enough for a context right-click
     vec2i start_point;
     vec2i current_point;
     vec2i previous_frame_point;
@@ -35,6 +36,9 @@ int get_total_active_touches();
 int touch_not_click(const touch_t * t);
 int touch_was_click(const touch_t * t);
 int touch_was_double_click(const touch_t * t);
+int touch_was_two_finger_tap(void);
+int touch_poll_long_press(void);
+void touch_consume_current_gesture(void);
 
 int touch_is_scroll();
 int touch_get_scroll();

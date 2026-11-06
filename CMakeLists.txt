@@ -3,7 +3,16 @@ include(CMakeDependentOption)
 include(FetchContent)
 include(ExternalProject)
 
+set(TARGET_PLATFORM "default" CACHE STRING "Platform to cross-compile for. Options: default ios android")
 set(CMAKE_BUILD_PLATFORM "default" CACHE STRING "Platform to cross-compile for. Options: android default")
+
+if (TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(PLATFORM_IOS TRUE)
+    set(OPTION_ENABLE_TRACY OFF)
+    set(OPTION_ENABLE_INNOEXTRACT OFF)
+    set(OPTION_ENABLE_VIDEO_RECORDING OFF)
+    add_definitions(-DIOS_BUILD=ON)
+endif()
 
 option(OPTION_ENABLE_TRACY "Enable Tracy profiler support" ON)
 option(OPTION_STEAMDECK "Force Steam Deck platform defaults (GAME_PLATFORM_STEAMDECK)" OFF)
@@ -812,6 +821,11 @@ if (PLATFORM_ANDROID)
     set(CMAKE_CXX_FLAGS "-Wno-format-security ${CMAKE_CXX_FLAGS}")
 endif()
 
+if (PLATFORM_IOS OR TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    file(GLOB IOS_BACKEND_FILES ${PROJECT_SOURCE_DIR}/src/platform/ios/*.mm ${PROJECT_SOURCE_DIR}/src/platform/ios/*.m)
+    set(PLATFORM_FILES ${PLATFORM_FILES} ${IOS_BACKEND_FILES})
+endif()
+
 # Find revision ID and hash of the sourcetree
 execute_process(
     COMMAND git rev-list --count --all
@@ -1033,7 +1047,7 @@ endif()
 
 # Standalone in-place update helper (desktop only). Game downloads/extracts, then
 # launches this binary and exits so files can be overwritten.
-if(NOT PLATFORM_ANDROID AND NOT WIN_EMSCRIPTEN AND NOT EMSCRIPTEN)
+if(NOT PLATFORM_ANDROID AND NOT PLATFORM_IOS AND NOT WIN_EMSCRIPTEN AND NOT EMSCRIPTEN)
     add_executable(akhenaten-updater "${PROJECT_SOURCE_DIR}/tools/akhenaten-updater/main.cpp")
     set_target_properties(akhenaten-updater PROPERTIES
         CXX_STANDARD 17
@@ -1077,7 +1091,26 @@ if (MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4098")
 endif()
 
-if(APPLE)
+if(PLATFORM_IOS OR TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(IOS_FILES
+        ${PROJECT_SOURCE_DIR}/res/ios/Assets.xcassets
+    )
+    set_source_files_properties(${IOS_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    target_sources(${GAME} PRIVATE ${IOS_FILES})
+
+    set_target_properties(${GAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "PharaohPad"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}.${GAME_BUILD_NUMBER}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.sippos.pharaohpad"
+        MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/res/ios/Info.plist"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.sippos.pharaohpad"
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
+    )
+elseif(APPLE)
     add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/res/akhenaten.icns
         COMMAND mkdir -p akhenaten.iconset
         COMMAND sips -z 16 16    akhenaten_72.png --out akhenaten.iconset/icon_16x16.png

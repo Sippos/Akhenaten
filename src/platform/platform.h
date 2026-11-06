@@ -14,9 +14,15 @@ int platform_sdl_version_at_least(int major, int minor, int patch);
 #define GAME_PLATFORM_WIN64
 #define GAME_PLATFORM_NAME "win64"
 #elif defined(__APPLE_CC__) || defined(__APPLE__) || defined(__APPLE_CPP__) || defined(__MACOS_CLASSIC__)
+#if defined(__IPHONEOS__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(IOS) || defined(__IOS__) || defined(IOS_BUILD)
+#define GAME_PLATFORM_UNIX
+#define GAME_PLATFORM_IOS
+#define GAME_PLATFORM_NAME "ios"
+#else
 #define GAME_PLATFORM_UNIX
 #define GAME_PLATFORM_MACOSX
 #define GAME_PLATFORM_NAME "macosx"
+#endif
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
 #define GAME_PLATFORM_UNIX
 #define GAME_PLATFORM_XBSD
@@ -141,6 +147,14 @@ struct platform_t {
 
 	inline constexpr bool is_macos() const {
 #ifdef GAME_PLATFORM_MACOSX
+		return true;
+#else
+		return false;
+#endif
+	}
+
+	inline constexpr bool is_ios() const {
+#ifdef GAME_PLATFORM_IOS
 		return true;
 #else
 		return false;

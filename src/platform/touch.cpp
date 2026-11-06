@@ -5,7 +5,7 @@
 
 static SDL_FingerID touch_id[MAX_ACTIVE_TOUCHES];
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(GAME_PLATFORM_IOS) && !defined(__IPHONEOS__)
 static SDL_TouchID trackpad_id;
 #endif
 
@@ -25,7 +25,7 @@ static int get_touch_index(SDL_FingerID id) {
 }
 
 void platform_touch_start(SDL_TouchFingerEvent* event) {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(GAME_PLATFORM_IOS) && !defined(__IPHONEOS__)
     // Attempt to disable trackpad touches on MacOS
     if (!trackpad_id)
         trackpad_id = SDL_GetTouchDevice(0);

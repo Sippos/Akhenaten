@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #define CLICK_TIME 300
+#define LONG_PRESS_TIME 350
 #define NOT_MOVING_RANGE 5
 #define SCROLL_FINGER_RADIUS 25
 #define MILLIS_TOLERANCE_BETWEEN_LAST_MOVE_AND_TOUCH_END 60
@@ -15,7 +16,7 @@ struct touch_data_t {
     touch_t finger[MAX_ACTIVE_TOUCHES + 1];
     touch_t old_touch;
     int last_scroll_position;
-    int mode;
+    int mode = TOUCH_MODE_DIRECT;
     int touchpad_mode_click_type;
 };
 
@@ -85,13 +86,51 @@ int touch_not_click(const touch_t * t) {
 }
 
 int touch_was_click(const touch_t * t) {
-    return (t->has_ended && !t->has_moved && (t->last_change_time - t->start_time) < CLICK_TIME);
+    return (t->has_ended && !t->has_moved && !t->long_press_handled && (t->last_change_time - t->start_time) < CLICK_TIME);
 }
 
 int touch_was_double_click(const touch_t* t) {
     auto &data = g_touch_data;
     return (touch_was_click(t) && touch_was_click(&data.old_touch) && (t->start_time > data.old_touch.last_change_time)
             && (t->start_time - data.old_touch.last_change_time) < CLICK_TIME);
+}
+
+int touch_was_two_finger_tap(void) {
+    const touch_t * first = get_earliest_touch();
+    const touch_t * last = get_latest_touch();
+    if (!last->in_use || (last->start_time - first->start_time) >= CLICK_TIME ||
+        first->has_moved || last->has_moved ||
+        first->long_press_handled || last->long_press_handled) {
+        return 0;
+    }
+    time_millis first_end = first->has_ended ? first->last_change_time : time_get_millis();
+    time_millis last_end = last->has_ended ? last->last_change_time : time_get_millis();
+    return (first->has_ended || last->has_ended) &&
+        (first_end - first->start_time) < CLICK_TIME &&
+        (last_end - last->start_time) < CLICK_TIME;
+}
+
+int touch_poll_long_press(void) {
+    touch_t * t = const_cast<touch_t*>(get_earliest_touch_raw());
+    time_millis now = time_get_millis();
+    time_millis end_time = t->has_ended ? t->last_change_time : now;
+    if (!t->in_use || t->long_press_handled ||
+        abs(t->current_point.x - t->start_point.x) > 24 ||
+        abs(t->current_point.y - t->start_point.y) > 24 ||
+        (end_time - t->start_time) < LONG_PRESS_TIME) {
+        return 0;
+    }
+    t->long_press_handled = 1;
+    return 1;
+}
+
+void touch_consume_current_gesture(void) {
+    auto &data = g_touch_data;
+    for (int i = 0; i < MAX_ACTIVE_TOUCHES; ++i) {
+        if (data.finger[i].in_use) {
+            data.finger[i].long_press_handled = 1;
+        }
+    }
 }
 
 int touch_is_scroll(void) {
@@ -147,6 +186,7 @@ int touch_create(vec2i start_coords, time_millis start_time) {
         t->in_use = 1;
         t->has_started = 1;
         t->has_ended = 0;
+        t->long_press_handled = 0;
         t->start_point = start_coords;
         t->current_point = start_coords;
         t->previous_frame_point = start_coords;
@@ -185,6 +225,7 @@ void touch_end(int index, time_millis current_time) {
     // This is needed because sometimes SDL waits for up to three frames to register the touch end
     if (current_time - t->last_change_time < MILLIS_TOLERANCE_BETWEEN_LAST_MOVE_AND_TOUCH_END)
         t->frame_movement = t->last_movement;
+    t->last_change_time = current_time;
 }
 
 #include "platform/touch.h"
@@ -295,20 +336,63 @@ static void handle_mouse_touchpad(void) {
 }
 
 static void handle_mouse_direct(void) {
+    auto &data = g_touch_data;
     auto &m = mouse::ref();
-    m.reset_scroll();
-    m.reset_button_state();
+    if (handle_emulated_mouse_clicks())
+        return;
 
-    const touch_t * first = get_earliest_touch();
+    int num_fingers = get_total_active_touches();
+    if (!num_fingers)
+        return;
+
+    const touch_t * first = get_earliest_touch_raw();
+    if (!first->in_use)
+        return;
+
     int x = first->current_point.x;
     int y = first->current_point.y;
-    mouse::ref().warp_position(&x, &y);
-    mouse::ref().set_position({ x, y });
+    m.warp_position(&x, &y);
+    m.set_position({ x, y });
+
+    // Two-finger tap: cancel tool / context right click
+    if (touch_was_two_finger_tap()) {
+        touch_consume_current_gesture();
+        m.set_right_down(1);
+        m.determine_button_state();
+        data.touchpad_mode_click_type = EMULATED_MOUSE_CLICK_RIGHT;
+        return;
+    }
+
+    // Long press (>350ms): context right click inspection
+    if (touch_poll_long_press()) {
+        m.set_right_down(1);
+        m.determine_button_state();
+        data.touchpad_mode_click_type = EMULATED_MOUSE_CLICK_RIGHT;
+        return;
+    }
+
+    // Two finger pan
+    if (num_fingers >= 2) {
+        const touch_t * second = get_latest_touch();
+        if (second->in_use && (first->has_moved || second->has_moved)) {
+            m.move_relative(first->frame_movement);
+        }
+        return;
+    }
+
+    // Single finger tap
+    if (any_touch_went_up()) {
+        if (touch_was_click(first)) {
+            m.set_left_down(1);
+            m.determine_button_state();
+            data.touchpad_mode_click_type = EMULATED_MOUSE_CLICK_LEFT;
+        }
+    }
 }
 
 int touch_to_mouse(void) {
     auto &data = g_touch_data;
-    const touch_t * first = get_earliest_touch();
+    const touch_t * first = (data.mode == TOUCH_MODE_DIRECT) ? get_earliest_touch_raw() : get_earliest_touch();
     auto &m = mouse::ref();
 
     if (!first->in_use) {
