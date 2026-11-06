@@ -470,7 +470,7 @@ public:
                 res = true;
 #elif defined(__APPLE__) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
                 std::error_code ec;
-                res = fs::create_directories(vName, ec);
+                res = std::filesystem::create_directories(vName, ec);
 #elif defined(_IGFD_UNIX_)
 #if defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD) || (defined(__APPLE__) && defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
                 if (mkdir(vName.c_str(), 0755) == 0 || errno == EEXIST) {
@@ -641,7 +641,7 @@ public:
                 res = true;
 #elif defined(__APPLE__) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
                 std::error_code ec;
-                res = fs::create_directories(vName, ec);
+                res = std::filesystem::create_directories(vName, ec);
 #elif defined(_IGFD_UNIX_)
 #if defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD) || (defined(__APPLE__) && defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
                 if (mkdir(vName.c_str(), 0755) == 0 || errno == EEXIST) {
