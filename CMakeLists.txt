@@ -345,6 +345,8 @@ set(ZLIB_BUILD_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/BuildZlib.cmake")
 # Build zlib using execute_process (runs during configuration phase)
 message(STATUS "Building zlib static library...")
 set(ZLIB_BUILD_CMAKE_ARGS
+    -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+    -DIOS_BUILD=${PLATFORM_IOS}
     -DZLIB_VERSION=${ZLIB_VERSION}
     -DZLIB_SOURCE_DIR=${ZLIB_SOURCE_DIR}
     -DZLIB_BUILD_DIR=${ZLIB_BUILD_DIR}
@@ -428,6 +430,8 @@ if(NOT WIN_EMSCRIPTEN)
     # Build SDL2 using execute_process (runs during configuration phase)
     message(STATUS "Building SDL2 static library...")
     set(SDL2_BUILD_CMAKE_ARGS
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DIOS_BUILD=${PLATFORM_IOS}
         -DSDL2_VERSION=${SDL2_VERSION}
         -DSDL2_SOURCE_DIR=${SDL2_SOURCE_DIR}
         -DSDL2_BUILD_DIR=${SDL2_BUILD_DIR}
@@ -520,6 +524,8 @@ if(NOT WIN_EMSCRIPTEN)
     # Build SDL2_mixer using execute_process (runs during configuration phase)
     message(STATUS "Building SDL2_mixer static library...")
     set(SDL2_MIXER_BUILD_CMAKE_ARGS
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DIOS_BUILD=${PLATFORM_IOS}
         -DSDL2_MIXER_VERSION=${SDL2_MIXER_VERSION}
         -DSDL2_MIXER_SOURCE_DIR=${SDL2_MIXER_SOURCE_DIR}
         -DSDL2_MIXER_BUILD_DIR=${SDL2_MIXER_BUILD_DIR}
@@ -611,6 +617,8 @@ set(FREETYPE_BUILD_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/BuildFreetype.cmake")
 message(STATUS "Building freetype static library...")
 
 set(FREETYPE_BUILD_CMAKE_ARGS
+    -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+    -DIOS_BUILD=${PLATFORM_IOS}
     -DFREETYPE_VERSION=${FREETYPE_VERSION}
     -DFREETYPE_SOURCE_DIR=${FREETYPE_SOURCE_DIR}
     -DFREETYPE_BUILD_DIR=${FREETYPE_BUILD_DIR}
@@ -690,6 +698,8 @@ set(HARFBUZZ_BUILD_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/BuildHarfbuzz.cmake")
 # Build harfbuzz using execute_process (runs during configuration phase)
 message(STATUS "Building harfbuzz static library...")
 set(HARFBUZZ_BUILD_CMAKE_ARGS
+    -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+    -DIOS_BUILD=${PLATFORM_IOS}
     -DHARFBUZZ_VERSION=${HARFBUZZ_VERSION}
     -DHARFBUZZ_SOURCE_DIR=${HARFBUZZ_SOURCE_DIR}
     -DHARFBUZZ_BUILD_DIR=${HARFBUZZ_BUILD_DIR}
