@@ -7,6 +7,7 @@ set(TARGET_PLATFORM "default" CACHE STRING "Platform to cross-compile for. Optio
 set(CMAKE_BUILD_PLATFORM "default" CACHE STRING "Platform to cross-compile for. Options: android default")
 
 if (TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(CMAKE_SYSTEM_NAME "iOS")
     set(PLATFORM_IOS TRUE)
     set(OPTION_ENABLE_TRACY OFF CACHE BOOL "" FORCE)
     set(OPTION_ENABLE_INNOEXTRACT OFF CACHE BOOL "" FORCE)
@@ -1030,7 +1031,7 @@ if (MSVC)
     target_compile_options(resources PRIVATE /bigobj /Zm1000 /MP1)
 endif()
 
-if (!APPLE)
+if (NOT APPLE)
     set_source_files_properties(${SOURCE_FILES} PROPERTIES LANGUAGE CXX)
 endif()
 
@@ -1118,8 +1119,17 @@ if(PLATFORM_IOS OR TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL 
         MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/res/ios/Info.plist"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.sippos.pharaohpad"
         XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS "iphoneos iphonesimulator"
         XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
         XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
+        XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
+    )
+
+    add_custom_command(TARGET ${GAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${GAME}>/data"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${PROJECT_SOURCE_DIR}/data"
+                "$<TARGET_FILE_DIR:${GAME}>/data"
     )
 elseif(APPLE)
     add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/res/akhenaten.icns

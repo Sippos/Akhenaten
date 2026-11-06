@@ -33,6 +33,13 @@ STAGED_APP="$STAGING_DIR/Payload/PharaohPad.app"
 rm -rf "$STAGED_APP/_CodeSignature"
 rm -f "$STAGED_APP/embedded.mobileprovision"
 
+# Ensure engine data files (fonts, custom packs) are bundled
+if [[ ! -d "$STAGED_APP/data" && ! -d "$STAGED_APP/Data" ]]; then
+    echo "Copying engine data files to app bundle..."
+    mkdir -p "$STAGED_APP/data"
+    cp -R "$ROOT_DIR/data/"* "$STAGED_APP/data/"
+fi
+
 # Copyright safety audit: ensure original game assets are NEVER packaged into public binary
 PROHIBITED_FILES="$(find "$STAGED_APP" -type f \( \
     -iname 'pharaoh.eng' -o \

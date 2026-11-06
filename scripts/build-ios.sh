@@ -60,7 +60,7 @@ if [[ "$SDK" == "iphoneos" ]]; then
     fi
 else
     XCODE_ARGS+=(
-        -destination "platform=iOS Simulator,name=iPad Pro 11-inch (M4)"
+        -destination "generic/platform=iOS Simulator"
         CODE_SIGN_IDENTITY=""
         CODE_SIGNING_REQUIRED=NO
         CODE_SIGNING_ALLOWED=NO
