@@ -54,7 +54,7 @@
 #undef max
 #endif
 
-#if !(defined(GAME_PLATFORM_ANDROID) || defined(GAME_PLATFORM_WEB) || defined(GAME_PLATFORM_MACOSX))
+#if (defined(GAME_PLATFORM_WIN) || defined(GAME_PLATFORM_LINUX)) && !defined(GAME_PLATFORM_IOS) && !defined(IOS_BUILD)
 #include <gpupixel.h>
 #endif
 
