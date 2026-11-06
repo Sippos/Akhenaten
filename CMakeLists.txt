@@ -8,17 +8,21 @@ set(CMAKE_BUILD_PLATFORM "default" CACHE STRING "Platform to cross-compile for. 
 
 if (TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(PLATFORM_IOS TRUE)
-    set(OPTION_ENABLE_TRACY OFF)
-    set(OPTION_ENABLE_INNOEXTRACT OFF)
-    set(OPTION_ENABLE_VIDEO_RECORDING OFF)
+    set(OPTION_ENABLE_TRACY OFF CACHE BOOL "" FORCE)
+    set(OPTION_ENABLE_INNOEXTRACT OFF CACHE BOOL "" FORCE)
+    set(OPTION_ENABLE_VIDEO_RECORDING OFF CACHE BOOL "" FORCE)
     add_definitions(-DIOS_BUILD=ON)
 endif()
 
-option(OPTION_ENABLE_TRACY "Enable Tracy profiler support" ON)
+if(PLATFORM_IOS)
+    option(OPTION_ENABLE_TRACY "Enable Tracy profiler support" OFF)
+else()
+    option(OPTION_ENABLE_TRACY "Enable Tracy profiler support" ON)
+endif()
 option(OPTION_STEAMDECK "Force Steam Deck platform defaults (GAME_PLATFORM_STEAMDECK)" OFF)
 # Download prebuilt innoextract host tool (not linked into the game).
 # Desktop platforms that can spawn helpers and unpack Windows/GOG Inno Setup .exe files.
-if((WIN32 OR UNIX) AND NOT ANDROID AND NOT EMSCRIPTEN)
+if((WIN32 OR UNIX) AND NOT ANDROID AND NOT EMSCRIPTEN AND NOT PLATFORM_IOS)
     option(OPTION_ENABLE_INNOEXTRACT "Download innoextract helper for GOG/Inno Setup installers" ON)
 else()
     option(OPTION_ENABLE_INNOEXTRACT "Download innoextract helper for GOG/Inno Setup installers" OFF)
@@ -60,6 +64,12 @@ if(APPLE AND DEFINED CMAKE_OSX_ARCHITECTURES)
 endif()
 if(APPLE AND DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
     list(APPEND BUILD_ADDITIONAL_CMAKE_ARGS -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET})
+endif()
+if(PLATFORM_IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    list(APPEND BUILD_ADDITIONAL_CMAKE_ARGS -DCMAKE_SYSTEM_NAME=iOS)
+    if(DEFINED CMAKE_OSX_SYSROOT)
+        list(APPEND BUILD_ADDITIONAL_CMAKE_ARGS -DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT})
+    endif()
 endif()
 
 #
@@ -234,7 +244,7 @@ elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
     set(MACOS_X64_BUILD ON)
 endif()
 
-if(NOT WIN_EMSCRIPTEN AND NOT MACOS_X64_BUILD)
+if(NOT WIN_EMSCRIPTEN AND NOT MACOS_X64_BUILD AND NOT PLATFORM_IOS)
     set(LOCAL_DEPS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/_deps")
     if (EXISTS "${LOCAL_DEPS_ROOT}/curl-src/CMakeLists.txt")
         set(FETCHCONTENT_SOURCE_DIR_CURL "${LOCAL_DEPS_ROOT}/curl-src")
@@ -1099,6 +1109,7 @@ if(PLATFORM_IOS OR TARGET_PLATFORM STREQUAL "ios" OR CMAKE_SYSTEM_NAME STREQUAL 
     target_sources(${GAME} PRIVATE ${IOS_FILES})
 
     set_target_properties(${GAME} PROPERTIES
+        OUTPUT_NAME "PharaohPad"
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "PharaohPad"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}.${GAME_BUILD_NUMBER}"
@@ -1213,7 +1224,23 @@ endif()
 # Apple specific
 #
 
-if(APPLE)
+if(PLATFORM_IOS)
+    target_link_libraries(${GAME}
+        "-framework UIKit"
+        "-framework Foundation"
+        "-framework CoreGraphics"
+        "-framework QuartzCore"
+        "-framework Metal"
+        "-framework MetalKit"
+        "-framework OpenGLES"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
+        "-framework AVFoundation"
+        "-framework CoreHaptics"
+        "-framework GameController"
+        z
+    )
+elseif(APPLE)
     target_link_libraries(${GAME}
         "-framework Cocoa"
         "-framework Carbon"
@@ -1231,7 +1258,7 @@ if(APPLE)
     )
 endif()
 
-if(APPLE)
+if(APPLE AND NOT PLATFORM_IOS)
     set(MACOS_DIR "${CMAKE_BINARY_DIR}/akhenaten.app/Contents/MacOS")
     set(DATA_SRC_DIR "${CMAKE_SOURCE_DIR}/data")
     set(LAUNCH_SCRIPT_SRC "${CMAKE_SOURCE_DIR}/res/macos/launch.sh")
@@ -1431,7 +1458,7 @@ if(OPTION_ENABLE_VIDEO_RECORDING)
     endif()
 endif()
 
-if(NOT WIN_EMSCRIPTEN AND NOT MACOS_X64_BUILD)
+if(NOT WIN_EMSCRIPTEN AND NOT MACOS_X64_BUILD AND NOT PLATFORM_IOS)
     if(TARGET CURL::libcurl)
         target_link_libraries(${GAME} CURL::libcurl)
     else()

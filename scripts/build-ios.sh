@@ -17,11 +17,20 @@ done
 
 mkdir -p "$BUILD_DIR"
 
-cmake \
-    -S "$ROOT_DIR" \
-    -B "$BUILD_DIR" \
-    -DTARGET_PLATFORM=ios \
+CMAKE_ARGS=(
+    -S "$ROOT_DIR"
+    -B "$BUILD_DIR"
+    -DCMAKE_SYSTEM_NAME=iOS
+    -DCMAKE_OSX_SYSROOT="$SDK"
+    -DTARGET_PLATFORM=ios
     -G Xcode
+)
+
+if [[ "$SDK" == "iphoneos" ]]; then
+    CMAKE_ARGS+=(-DCMAKE_OSX_ARCHITECTURES=arm64)
+fi
+
+cmake "${CMAKE_ARGS[@]}"
 
 XCODE_ARGS=(
     -project "$BUILD_DIR/akhenaten.xcodeproj"
