@@ -468,13 +468,22 @@ public:
                 std::string str = std::string("FS.mkdir('") + vName + "');";
                 emscripten_run_script(str.c_str());
                 res = true;
+#elif defined(__APPLE__) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
+                std::error_code ec;
+                res = fs::create_directories(vName, ec);
 #elif defined(_IGFD_UNIX_)
+#if defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD) || (defined(__APPLE__) && defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
+                if (mkdir(vName.c_str(), 0755) == 0 || errno == EEXIST) {
+                    res = true;
+                }
+#else
                 char buffer[PATH_MAX] = {};
                 snprintf(buffer, PATH_MAX, "mkdir -p \"%s\"", vName.c_str());
                 const int dir_err = std::system(buffer);
                 if (dir_err != -1) {
                     res = true;
                 }
+#endif
 #endif  // _IGFD_WIN_
                 if (!res) {
                     std::cout << "Error creating directory " << vName << std::endl;
@@ -630,13 +639,22 @@ public:
                 std::string str = std::string("FS.mkdir('") + vName + "');";
                 emscripten_run_script(str.c_str());
                 res = true;
+#elif defined(__APPLE__) || defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
+                std::error_code ec;
+                res = fs::create_directories(vName, ec);
 #elif defined(_IGFD_UNIX_)
+#if defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD) || (defined(__APPLE__) && defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
+                if (mkdir(vName.c_str(), 0755) == 0 || errno == EEXIST) {
+                    res = true;
+                }
+#else
                 char buffer[PATH_MAX] = {};
                 snprintf(buffer, PATH_MAX, "mkdir -p \"%s\"", vName.c_str());
                 const int dir_err = std::system(buffer);
                 if (dir_err != -1) {
                     res = true;
                 }
+#endif
 #endif  // _IGFD_WIN_
                 if (!res) {
                     std::cout << "Error creating directory " << vName << std::endl;

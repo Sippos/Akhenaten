@@ -305,8 +305,15 @@ bool updater_spawn_swap_and_restart(const std::string &work_dir, const std::stri
     }
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
+#elif defined(GAME_PLATFORM_IOS) || defined(IOS_BUILD)
+    (void)helper_run;
+    (void)staging_dir;
+    (void)install_dir;
+    (void)restart;
+    (void)work_dir;
+    (void)pid;
+    return false;
 #else
-    const std::string cmd = "\"" + helper_run + "\""
         + " --pid " + std::to_string(pid)
         + " --staging \"" + staging_dir + "\""
         + " --install \"" + install_dir + "\""

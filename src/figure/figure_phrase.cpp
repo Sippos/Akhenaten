@@ -64,12 +64,16 @@ void ANK_PERMANENT_CALLBACK(event_synthesize_figure_phrase, ev) {
     cmd.printf("%s -l en -p \"%s\" -f %s -o \"%s\"",
         tts_cmd_exe, lang_text_from_key(phrase_text.c_str()), prefix.c_str(), out_rel.c_str());
 
+#if !defined(GAME_PLATFORM_IOS) && !defined(IOS_BUILD)
     if (std::system(cmd.c_str()) == 0) {
         logs::info("Create file: %s", ev.path.c_str());
         g_sound.speech_play_file(ev.path, 255);
     } else {
         logs::info("akhenaten-tts failed with cmd: %s", cmd.c_str());
     }
+#else
+    (void)cmd;
+#endif
 
     std::filesystem::current_path(original_path.c_str());
 }
