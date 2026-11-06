@@ -161,4 +161,15 @@ void platform_hide_virtual_keyboard(void) {
     SDL_StopTextInput();
 }
 
+#ifdef main
+#undef main
+#endif
+
+extern "C" int SDL_UIKitRunApp(int argc, char *argv[], int (*mainFunction)(int, char **));
+extern "C" int SDL_main(int argc, char *argv[]);
+
+int main(int argc, char *argv[]) {
+    return SDL_UIKitRunApp(argc, argv, SDL_main);
+}
+
 #endif

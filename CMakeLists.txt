@@ -1264,6 +1264,8 @@ if(PLATFORM_IOS)
         "-framework AVFoundation"
         "-framework CoreHaptics"
         "-framework GameController"
+        "-framework CoreBluetooth"
+        "-framework CoreMotion"
         z
     )
 elseif(APPLE)
