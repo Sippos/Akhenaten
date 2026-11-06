@@ -1224,6 +1224,7 @@ include_directories(${imgui_SOURCE_DIR})
 include_directories(${imgui_SOURCE_DIR}/backends)
 include_directories(${imgui_SOURCE_DIR}/misc/cpp)
 include_directories(${HARFBUZZ_INCLUDE_DIRS})
+include_directories(${harfbuzz_SOURCE_DIR}/src)
 include_directories(ext)
 include_directories(ext/gpupixel/utils)
 
